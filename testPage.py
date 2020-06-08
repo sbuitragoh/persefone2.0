@@ -24,6 +24,6 @@ if __name__ == "__main__":
     lineInterval, lines = lisol.lineSet(pageCut)
     lisol.lineCleaner(pageCut, lineInterval)
 
-
+    # Se necesita determinar una mejor forma para las páginas
 
     print('Debug stop')
