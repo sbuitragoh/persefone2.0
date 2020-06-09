@@ -36,25 +36,45 @@ def pageProcessing(pageOriginal, pageHSV, pageGrey):
     return processed
 
 def limitExtract(processed):
+
+    X, Y = np.shape(processed)
     space = [0, 0]
     limit = [[0, 0], [0, 0]]
 
-    space[0] = int(np.shape(processed)[1] / 3)
-    space[1] = int(np.shape(processed)[0] / 3)
+    space[0] = int(Y // 3)
+    space[1] = int(X // 3)
 
     projectionProV = np.sum(processed, axis=0) / np.sum(processed)
     projectionProH = np.sum(processed, axis=1) / np.sum(processed)
 
-    idxSectionV = np.where(projectionProV <= 34E-6)[0]
-    idxSectionH = np.where(projectionProH <= 4E-5)[0]
+    idxSectionV = np.where((projectionProV >= 7E-5) & (projectionProV <= 1E-4))[0]
+    idxSectionH = np.where((projectionProH >= 7E-5) & (projectionProH <= 1E-4))[0]
 
     for i in range(len(idxSectionV) - 1):
         if idxSectionV[i + 1] - idxSectionV[i] > space[0]:
             limit[0] = [idxSectionV[i] - 20, idxSectionV[i + 1] + 20]
 
-    for i in range(len(idxSectionH) - 1):
-        if idxSectionH[i + 1] - idxSectionH[i] > space[1]:
-            limit[1] = [idxSectionH[i] - 20, idxSectionH[i + 1] + 20]
+    for j in range(len(idxSectionH) - 1):
+        if idxSectionH[0] > 300:
+            startSet = 0
+        else:
+            startSet = idxSectionH[0]
+
+        if idxSectionH[-1] < X - 300:
+            endSet = X
+        else:
+            endSet = idxSectionH[-1]
+
+        if limit[1][0] == 0:
+            if idxSectionH[j] - startSet >= 200:
+                limit[1][0] = idxSectionH[j] - 20
+
+        if limit[1][1] == 0:
+            if endSet - idxSectionH[-1-j] >= 200:
+                limit[1][1] = idxSectionH[-1-j] + 20
+
+        if limit[1][0] != 0 and limit[1][1] != 0:
+            break
 
     textCapsule = processed[limit[1][0]:limit[1][1], limit[0][0]:limit[0][1]]
 
