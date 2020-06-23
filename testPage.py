@@ -5,12 +5,11 @@ import lineSolver as lisol
 from scipy.stats import mode
 from skimage.measure import regionprops
 from matplotlib import pyplot as plt
-from matplotlib import patches as pch
 import scipy as sc
 
 
 if __name__ == "__main__":
-    pagePath = './testImag/out_1.jpg'
+    pagePath = './testImag/out_4.jpg'
 
     # PAGE ADQUISITION
     pageOriginal, pageHSV, pageGrey = pagpre.pageImport(pagePath)
@@ -23,7 +22,5 @@ if __name__ == "__main__":
 
     lineInterval, lines = lisol.lineSet(pageCut)
     lisol.lineCleaner(pageCut, lineInterval)
-
-    # Se necesita determinar una mejor forma para las páginas
 
     print('Debug stop')

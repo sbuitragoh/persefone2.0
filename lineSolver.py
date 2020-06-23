@@ -65,7 +65,13 @@ def lineCleaner(pageCut, lineInterval):
                 limitLine = lineInterval[i][1] + limitSet - lineInterval[i - 1][1]
 
             if py >= limitLine:
-                lineCopy[prop[x].bbox[0]:prop[x].bbox[2], prop[x].bbox[1]:prop[x].bbox[3]] = 0
+                currentSection = lineCopy[prop[x].bbox[0]:prop[x].bbox[2], prop[x].bbox[1]:prop[x].bbox[3]]
+                convexHull = prop[x].convex_image
+                X, Y = convexHull.shape
+                for m in range(X):
+                    for n in range(Y):
+                        if convexHull[m][n] == 1:
+                            currentSection[m][n] = 0
 
         if i == 0:
             pageCopy[0:lineInterval[1, 0], :] = cv.bitwise_xor(pageCopy[0:lineInterval[1, 0], :], lineCopy)
