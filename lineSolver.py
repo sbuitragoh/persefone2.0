@@ -55,6 +55,7 @@ def lineCleaner(pageCut, lineInterval):
         output = cv.connectedComponentsWithStats(lineCopy)
         prop = regionprops(output[1])
         limitSet = int((lineInterval[i + 1][0] - lineInterval[i][1]) / 4)
+        boundingBox = []
 
         for x in range(0, len(prop)):
             py, px = prop[x].centroid
@@ -72,6 +73,8 @@ def lineCleaner(pageCut, lineInterval):
                     for n in range(Y):
                         if convexHull[m][n] == 1:
                             currentSection[m][n] = 0
+            else:
+                boundingBox.append(prop[x].bbox)
 
         if i == 0:
             pageCopy[0:lineInterval[1, 0], :] = cv.bitwise_xor(pageCopy[0:lineInterval[1, 0], :], lineCopy)
@@ -81,3 +84,5 @@ def lineCleaner(pageCut, lineInterval):
 
         linePath = './lines/line_' + str(i + 1) + '.png'
         cv.imwrite(linePath, lineCopy)
+
+        return boundingBox
