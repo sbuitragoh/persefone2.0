@@ -3,6 +3,7 @@ import cv2 as cv
 from matplotlib import pyplot as plt
 from skimage.measure import regionprops
 from matplotlib import patches as pch
+import os
 
 def lineSet(pageCut):
 
@@ -82,7 +83,44 @@ def lineCleaner(pageCut, lineInterval):
             pageCopy[lineInterval[i - 1][1]:lineInterval[i + 1, 0]+20, :] = cv.bitwise_xor(
                 pageCopy[lineInterval[i - 1][1]:lineInterval[i + 1, 0]+20, :], lineCopy)
 
+        #Setting words inside the line
+        wordInLine(boundingBox, lineCopy, i)
+
+        #Write in folder, all lines in page
         linePath = './lines/line_' + str(i + 1) + '.png'
         cv.imwrite(linePath, lineCopy)
 
-        return boundingBox
+
+def wordInLine(boundingBox, currentLine,lineNumber):
+    def xPos(elem):
+        return elem[1]
+
+    boundingBox.sort(key = xPos) # boxes sorted through x1
+    boundingBox = np.asarray(boundingBox)
+    box,_ = np.shape(boundingBox)
+    wordBox = []
+    for b in range(box-1):
+        if boundingBox[b+1][0] >= boundingBox[b][0] and boundingBox[b+1][0] <= boundingBox[b][2]:
+            if boundingBox[b+1][1] >= boundingBox[b][1] and boundingBox[b+1][1] <= boundingBox[b][3]:
+                boundingBox[b+1][0] = boundingBox[b][0]
+                boundingBox[b+1][1] = boundingBox[b][1]
+                boundingBox[b+1][2] = np.maximum(boundingBox[b+1][2], boundingBox[b][2])
+                boundingBox[b+1][3] = np.maximum(boundingBox[b+1][3], boundingBox[b][3])
+    #Clean values
+    for word in range(box-1):
+        if boundingBox[word+1][0] == boundingBox[word][0]:
+            if boundingBox[word + 1][1] == boundingBox[word][1]:
+                pass
+        else:
+            wordBox.append(boundingBox[word])
+    wordBox.append(boundingBox[-1])
+
+    words, coord = np.shape(wordBox)
+    for savedWord in range(words):
+
+        currentWord = wordBox[savedWord]
+        word2Save = currentLine[currentWord[0]:currentWord[2], currentWord[1]:currentWord[3]]
+        xW, yW = np.shape(word2Save)
+        if xW > 15 and yW > 15:
+            wordLinePath = './words/line_' + str(lineNumber + 1) + '_word_' + str(savedWord) + '.png'
+            cv.imwrite(wordLinePath, word2Save)
