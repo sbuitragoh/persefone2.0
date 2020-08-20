@@ -9,14 +9,13 @@ def lineSet(pageCut):
 
     htTerms = cv.reduce(pageCut, 1, cv.REDUCE_AVG).reshape(-1)
     thresh = 30
+    lineInterval = []
 
     for el in range(len(htTerms)):
-        if htTerms[el] < thresh:
-            htTerms[el] = 0
-        if htTerms[el] >= thresh:
-            htTerms[el] = 1
+        htTerms[el] = 0 if htTerms[el] < thresh else 1
+        #if htTerms[el] < thresh: htTerms[el] = 0
+        #if htTerms[el] >= thresh: htTerms[el] = 1
 
-    lineInterval = []
     for i in range(len(htTerms)-1):
         if (htTerms[i] == 0 and htTerms[i+1] == 1) or (htTerms[i] == 1 and htTerms[i+1] == 0):
             lineInterval.append(i)
@@ -47,10 +46,12 @@ def lineCleaner(pageCut, lineInterval):
     pageCopy = pageCut.copy()
 
     for i in range(0, len(lineInterval) - 1):
-        if i == 0:
-            lineSection = pageCopy[0:lineInterval[i + 1][0], :]
-        else:
-            lineSection = pageCopy[lineInterval[i - 1][1]:lineInterval[i + 1][0]+20, :]
+        lineSection = pageCopy[0:lineInterval[i + 1][0], :] if not i else \
+            pageCopy[lineInterval[i - 1][1]:lineInterval[i + 1][0]+20, :]
+        #if i == 0:
+        #    lineSection = pageCopy[0:lineInterval[i + 1][0], :]
+        #else:
+        #    lineSection = pageCopy[lineInterval[i - 1][1]:lineInterval[i + 1][0]+20, :]
 
         lineCopy = lineSection.copy()
         output = cv.connectedComponentsWithStats(lineCopy)
@@ -61,10 +62,13 @@ def lineCleaner(pageCut, lineInterval):
         for x in range(0, len(prop)):
             py, px = prop[x].centroid
 
-            if i == 0:
-                limitLine = lineInterval[i][1] + limitSet
-            else:
-                limitLine = lineInterval[i][1] + limitSet - lineInterval[i - 1][1]
+            limitLine = lineInterval[i][1] + limitSet if not i else \
+                lineInterval[i][1] + limitSet - lineInterval[i - 1][1]
+
+            #if i == 0:
+            #    limitLine = lineInterval[i][1] + limitSet
+            #else:
+            #    limitLine = lineInterval[i][1] + limitSet - lineInterval[i - 1][1]
 
             if py >= limitLine:
                 currentSection = lineCopy[prop[x].bbox[0]:prop[x].bbox[2], prop[x].bbox[1]:prop[x].bbox[3]]
@@ -89,7 +93,6 @@ def lineCleaner(pageCut, lineInterval):
         #Write in folder, all lines in page
         linePath = './lines/line_' + str(i + 1) + '.png'
         cv.imwrite(linePath, lineCopy)
-
 
 def wordInLine(boundingBox, currentLine,lineNumber):
     def xPos(elem):
@@ -122,5 +125,5 @@ def wordInLine(boundingBox, currentLine,lineNumber):
         word2Save = currentLine[currentWord[0]:currentWord[2], currentWord[1]:currentWord[3]]
         xW, yW = np.shape(word2Save)
         if xW > 15 and yW > 15:
-            wordLinePath = './words/line_' + str(lineNumber + 1) + '_word_' + str(savedWord) + '.png'
+            wordLinePath = './words/line_' + str(lineNumber + 1) + '_word_' + str(savedWord+1) + '.png'
             cv.imwrite(wordLinePath, word2Save)
