@@ -55,23 +55,24 @@ def limitExtract(processed):
             limit[0] = [idxSectionV[i] - 20, idxSectionV[i + 1] + 20]
 
     for j in range(len(idxSectionH) - 1):
-        if idxSectionH[0] > 300:
-            startSet = 0
-        else:
-            startSet = idxSectionH[0]
 
-        if idxSectionH[-1] < X - 300:
-            endSet = X
-        else:
-            endSet = idxSectionH[-1]
+        startSet = idxSectionH[0] if idxSectionH[0] <= 300 else 0
+        endSet = idxSectionH[-1] if idxSectionH[-1] >= X-300 else X
+        #if idxSectionH[0] > 300:
+        #    startSet = 0
+        #else:
+        #    startSet = idxSectionH[0]
 
-        if limit[1][0] == 0:
-            if idxSectionH[j] - startSet >= 200:
-                limit[1][0] = idxSectionH[j] - 20
+        #if idxSectionH[-1] < X - 300:
+        #    endSet = X
+        #else:
+        #    endSet = idxSectionH[-1]
 
-        if limit[1][1] == 0:
-            if endSet - idxSectionH[-1-j] >= 200:
-                limit[1][1] = idxSectionH[-1-j] + 20
+        if not limit[1][0]:
+            if idxSectionH[j] - startSet >= 200: limit[1][0] = idxSectionH[j] - 20
+
+        if not limit[1][1]:
+            if endSet - idxSectionH[-1-j] >= 200: limit[1][1] = idxSectionH[-1-j] + 20
 
         if limit[1][0] != 0 and limit[1][1] != 0:
             break
