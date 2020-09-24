@@ -4,7 +4,7 @@ import numpy as np
 # estructura es -x
 sufix ={
     "(ae)" : "#",
-   # "ae" : "#",
+    #"(a)e" : "#",
     "a(e)" : "#",
     "(am)" : "$",
     "a(m)" : "$",
@@ -41,7 +41,7 @@ words = {
 # estructura es -x-
 
 extras = {
-    # "ae" : "_",
+    # "(a)e" : "_",
     "(ae)" : "_"
 }
 
@@ -68,6 +68,8 @@ def wordPreparation(original):
             res[ele].append(idx)
 
         if '(' in res:
+            cnt = 0
+
             openings = res['(']
             endings = res[')']
 
@@ -75,45 +77,127 @@ def wordPreparation(original):
 
             amountAbrev = len(openings)
 
-            print("Abreviatures: ")
+            print("Abreviatures left: ")
             print(amountAbrev)
             sufCond = 0
 
             for i in range(len(openings)):
-                currentPair = pairs[:,i]
+                if cnt == 0:
+                    currentPair = pairs[:,i]
+                else:
+                    res = {ele: [] for ele in word}
+                    for idx, ele in enumerate(word):
+                        res[ele].append(idx)
+                    openings = res['(']
+                    endings = res[')']
+
+                    pairs = np.array([openings, endings])
+                    currentPair = pairs[:, 0]
+
                 print("Abrev. #" + str(i))
-                print("Pair: " + str(pairs[:,i]))
+                print("Pair: " + str(pairs))
                 print(word[currentPair[0]:currentPair[1]+1])
-                if lnword - 1 == currentPair[1] and currentPair[0] != 0:
+
+                if len(word) - 1 == currentPair[1] and currentPair[0] != 0:
                     print('Sufix in word')
                     sufCond = 1
 
+                wordAsList = list(word)
+                newWord = ""
+
                 if sufCond:
                     wordSegment = word[currentPair[0]-1:currentPair[1]+1]
+                    foundSuf = 0
                     for j in range(len(sufKeys)):
+
                         if sufKeys[j] in wordSegment:
                             print("Sufix in library!")
                             print("Position: ")
                             whereSuf = wordSegment.find(sufKeys[j])
                             print(whereSuf)
+
                             if whereSuf == 0:
-                                word.replace(wordSegment, sufix[sufKeys[j]])
+                                wordAsList[currentPair[0] - 1:currentPair[1] + 1] = sufix[sufKeys[j]]
                             else:
-                                newSegment = word[currentPair[0]:currentPair[1] + 1]
-                                word.replace(newSegment,sufix[sufKeys[j]])
-                            print(word)
+                                wordAsList[currentPair[0]:currentPair[1] + 1] = sufix[sufKeys[j]]
+                            print(wordAsList)
+                            newList = wordAsList
+                            foundSuf = 1
+                    if not foundSuf :
+                        wordAsList[currentPair[0]:currentPair[1] + 1] = ""
+                        newList = wordAsList
                     sufCond = 0
+
+                    newWord = newWord.join(newList)
+                    print(newWord)
                 else:
-                    wordSegment = word[currentPair[0]:currentPair[1]+3]
+                    zeroChk = 0
+
+                    if currentPair[0] == 0:
+                        wordSegment = word[currentPair[0]:currentPair[1] + 3]
+                    else:
+                        wordSegment = word[currentPair[0] - 1:currentPair[1] + 3]
+
+
+                    for k in range(len(prefKeys)):
+                        if prefKeys[k] in wordSegment:
+                            print("Search in prefix")
+                            if prefKeys[k][0] == '(':
+                                wordAsList[currentPair[0]:currentPair[1] + 1] = prefix[prefKeys[k]]
+                            else:
+                                wordAsList[currentPair[0] - 1:currentPair[1] + 1] = prefix[prefKeys[k]]
+                            newList = wordAsList
+                            zeroChk = 1
+
+                    for l in range(len(wordKeys)):
+                        if wordKeys[l] in wordSegment:
+                            print("Search in words")
+                            if l < 2:
+                                wordAsList[currentPair[0]:currentPair[1] + 3] = words[wordKeys[l]]
+                            else:
+                                if wordKeys[l][0] == '(':
+                                    wordAsList[currentPair[0]:currentPair[1] + 1] = words[wordKeys[l]]
+                                else:
+                                    wordAsList[currentPair[0]-1:currentPair[1] + 1] = words[wordKeys[l]]
+                            newList = wordAsList
+                            zeroChk = 1
+
+
+                    for m in range(len(extKeys)):
+                        if extKeys[m] in wordSegment:
+                            print("Search in extras")
+                            wordAsList[currentPair[0]:currentPair[1] + 1] = extras[extKeys[m]]
+                            newList = wordAsList
+                            zeroChk = 1
+
+                    if not zeroChk:
+                        print("Not in dictionaries")
+                        wordAsList[currentPair[0]:currentPair[1] + 1] = ""
+                        newList = wordAsList
+
+                    newWord = newWord.join(newList)
+                    print(newWord)
                 print("Analized Segment: ")
-                print(wordSegment)
-    # if clean word is in words then.. (remove parenthesis and °)
-    # if (,) then check position
-        # if ( is first item then dict is prefix
-        # if ) is last item then dict is sufix
-        # else extras
-        input("Press Enter")
+                print(newWord)
+                word = newWord
+                print("Final Word:")
+                print(word)
+                cnt+=1
+                print("Abrev. analized")
+                print("Counter: " + str(cnt))
+
+        processedText+=word
+        processedText+=" "
+
+        print (processedText)
     return processedText
 
-text = "Locus defi[ni]t(ur) a phylosopho 4 Physicor(um) textu 29 (et) e(ss)e"
+text = "Locus defi[ni]t(ur) a phylosopho 4 Physicor(um) textu 29, ultima superficies corporis " \
+       "immobilis (con)tinentis prima. Su(per)ficies e(st) extrem(um) illius, quod (con)tinet aliud " \
+       "ponit(ur) corporis (con)tinentis, ut sig[nifi]cet(ur) loc(um) n(on) e(ss)e su(per)fici(em) " \
+       "locati, s(e)d loc(um) e(ss)e extrin[se]c(um) locato; atq(ue) adeo pellis a[n]i[m]alis n(on) " \
+       "e(st) locus illius. Ponit(ur) ultima, quod in[te]llige r[espect]u loci. D(icitu)r prima, q(ui)a " \
+       "n(on) qu(a)elibet su(per)ficies corp[or]is (con)tinentis e(st) locus, s(e)d illa, qu(a)e e(st) " \
+       "(pro)xima rei locat(a)e."
+
 wordPreparation(text)
