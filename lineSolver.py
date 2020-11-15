@@ -8,7 +8,7 @@ import os
 def lineSet(pageCut):
 
     htTerms = cv.reduce(pageCut, 1, cv.REDUCE_AVG).reshape(-1)
-    thresh = 30
+    thresh = 25
     lineInterval = []
 
     for el in range(len(htTerms)):
@@ -20,12 +20,27 @@ def lineSet(pageCut):
         if (htTerms[i] == 0 and htTerms[i+1] == 1) or (htTerms[i] == 1 and htTerms[i+1] == 0):
             lineInterval.append(i)
 
+    if len(lineInterval) % 2 != 0:
+        lineInterval.insert(0,0)
+
     lineInterval = np.array(np.reshape(lineInterval, (-1, 2)))
+    lineInterval[0][0] = 0
+    lineInterval[-1][1] = np.shape(pageCut)[0]
     lineInterval = np.c_[lineInterval, lineInterval[:, 1] - lineInterval[:, 0]]
-    lineInterval = lineInterval[lineInterval[:, 2] >= 40]
+    lineInterval = lineInterval[lineInterval[:, 2] >= 35]
+    lineInterval[0][0] = 0
+
+    if np.where(lineInterval[:-1,2]>200)[0].size != 0:
+        for space in np.where(lineInterval[:-1,2]>200):
+            a,b,_ = lineInterval[space][0]
+            rangeInt = int((b-a)/2)
+
+            lineInterval = np.insert(lineInterval, space+1, [a+rangeInt+7, b, b-(a+rangeInt+7)], axis=0)
+            lineInterval = np.insert(lineInterval, space + 1, [a, a + rangeInt - 7, rangeInt - 7], axis=0)
+            lineInterval = np.delete(lineInterval, space, axis=0)
+
     lines, _ = np.shape(lineInterval)
 
-    lineInterval[0][0] = 0
     return lineInterval, lines
 
 def elementColoring(lb):
@@ -42,12 +57,16 @@ def elementColoring(lb):
     cv.imshow('labeled.png', labeled_img)
     cv.waitKey()
 
-def lineCleaner(pageCut, lineInterval):
+def lineCleaner(pageCut, lineInterval, numberPage):
     pageCopy = pageCut.copy()
 
-    for i in range(0, len(lineInterval) - 1):
-        lineSection = pageCopy[0:lineInterval[i + 1][0], :] if not i else \
-            pageCopy[lineInterval[i - 1][1]:lineInterval[i + 1][0]+20, :]
+    for i in range(0, len(lineInterval)):
+        if i == 0:
+            lineSection = pageCopy[lineInterval[0][0]:lineInterval[i+1][0], :]
+        elif i == len(lineInterval)-1:
+            lineSection = pageCopy[lineInterval[-2][1]:lineInterval[-1][1], :]
+        else:
+            lineSection = pageCopy[lineInterval[i - 1][1]:lineInterval[i + 1][0] + 15, :]
         #if i == 0:
         #    lineSection = pageCopy[0:lineInterval[i + 1][0], :]
         #else:
@@ -56,7 +75,10 @@ def lineCleaner(pageCut, lineInterval):
         lineCopy = lineSection.copy()
         output = cv.connectedComponentsWithStats(lineCopy)
         prop = regionprops(output[1])
-        limitSet = int((lineInterval[i + 1][0] - lineInterval[i][1]) / 4)
+        if i < len(lineInterval)-1:
+            limitSet = int((lineInterval[i + 1][0] - lineInterval[i][1]) / 4)
+        else:
+            limitSet = int((lineInterval[i][0]-lineInterval[i][1])/4)
         boundingBox = []
 
         for x in range(0, len(prop)):
@@ -83,18 +105,21 @@ def lineCleaner(pageCut, lineInterval):
 
         if i == 0:
             pageCopy[0:lineInterval[1, 0], :] = cv.bitwise_xor(pageCopy[0:lineInterval[1, 0], :], lineCopy)
+        elif i == len(lineInterval)-1:
+            pageCopy[lineInterval[i - 1, 1]:lineInterval[i, 1], :] = cv.bitwise_xor(
+                pageCopy[lineInterval[i - 1, 1]:lineInterval[i, 1], :], lineCopy)
         else:
-            pageCopy[lineInterval[i - 1][1]:lineInterval[i + 1, 0]+20, :] = cv.bitwise_xor(
-                pageCopy[lineInterval[i - 1][1]:lineInterval[i + 1, 0]+20, :], lineCopy)
+            pageCopy[lineInterval[i - 1][1]:lineInterval[i + 1, 0] + 15, :] = cv.bitwise_xor(
+                pageCopy[lineInterval[i - 1][1]:lineInterval[i + 1, 0] + 15, :], lineCopy)
 
         #Setting words inside the line
-        wordInLine(boundingBox, lineCopy, i)
+        wordInLine(boundingBox, lineCopy, i, numberPage)
 
         #Write in folder, all lines in page
         linePath = './lines/line_' + str(i + 1) + '.png'
         cv.imwrite(linePath, lineCopy)
 
-def wordInLine(boundingBox, currentLine,lineNumber):
+def wordInLine(boundingBox, currentLine,lineNumber, numberPage):
     def xPos(elem):
         return elem[1]
 
@@ -125,5 +150,5 @@ def wordInLine(boundingBox, currentLine,lineNumber):
         word2Save = currentLine[currentWord[0]:currentWord[2], currentWord[1]:currentWord[3]]
         xW, yW = np.shape(word2Save)
         if xW > 15 and yW > 15:
-            wordLinePath = './words/line_' + str(lineNumber + 1) + '_word_' + str(savedWord+1) + '.png'
+            wordLinePath = './words/page_'+str(numberPage)+'_line_' + str(lineNumber + 1) + '_word_' + str(savedWord+1) + '.png'
             cv.imwrite(wordLinePath, word2Save)

@@ -4,8 +4,8 @@ import numpy as np
 # estructura es -x
 sufix ={
     "(ae)" : "#",
-    #"(a)e" : "#",
-    "a(e)" : "#",
+    # "(a)e" : "#",
+    # "ae" : "#",
     "(am)" : "$",
     "a(m)" : "$",
     "e(m)" : "%",
@@ -31,10 +31,11 @@ prefix = {
 # Si el segmento es la palabra, es decir que su
 # estructura es x
 words = {
-    "(er)go": "¬",
-    "(er)g°": "¬",
+    "(er)go": "¬°",
+    "(er)g°": "¬°",
     "e(t)" : "^",
-    "(et)": "^"
+    "(et)": "^",
+    # "e(st)" : "e~"
 }
 
 # Si el segmento esta en el medio de la palabra, es decir que su
@@ -59,9 +60,8 @@ def wordPreparation(original):
     originalWords = pre2.split(" ")
 
     for word in originalWords:
-        lnword = len(word)
         print("Searching word: " + word + " for terms.")
-        print("Size of word: " + str(lnword))
+        print("Size of word: " + str(len(word)))
 
         res = {ele: [] for ele in word}
         for idx, ele in enumerate(word):
@@ -69,17 +69,12 @@ def wordPreparation(original):
 
         if '(' in res:
             cnt = 0
+            sufCond = 0
 
             openings = res['(']
             endings = res[')']
-
             pairs = np.array([openings,endings])
 
-            amountAbrev = len(openings)
-
-            print("Abreviatures left: ")
-            print(amountAbrev)
-            sufCond = 0
 
             for i in range(len(openings)):
                 if cnt == 0:
@@ -94,12 +89,12 @@ def wordPreparation(original):
                     pairs = np.array([openings, endings])
                     currentPair = pairs[:, 0]
 
-                print("Abrev. #" + str(i))
-                print("Pair: " + str(pairs))
-                print(word[currentPair[0]:currentPair[1]+1])
+                # print("Abrev. #" + str(i))
+                # print("Pair: " + str(pairs))
+                # print(word[currentPair[0]:currentPair[1]+1])
 
                 if len(word) - 1 == currentPair[1] and currentPair[0] != 0:
-                    print('Sufix in word')
+                    # print('Sufix in word')
                     sufCond = 1
 
                 wordAsList = list(word)
@@ -109,27 +104,24 @@ def wordPreparation(original):
                     wordSegment = word[currentPair[0]-1:currentPair[1]+1]
                     foundSuf = 0
                     for j in range(len(sufKeys)):
-
                         if sufKeys[j] in wordSegment:
-                            print("Sufix in library!")
-                            print("Position: ")
                             whereSuf = wordSegment.find(sufKeys[j])
-                            print(whereSuf)
 
                             if whereSuf == 0:
                                 wordAsList[currentPair[0] - 1:currentPair[1] + 1] = sufix[sufKeys[j]]
                             else:
                                 wordAsList[currentPair[0]:currentPair[1] + 1] = sufix[sufKeys[j]]
-                            print(wordAsList)
+
                             newList = wordAsList
                             foundSuf = 1
+
                     if not foundSuf :
                         wordAsList[currentPair[0]:currentPair[1] + 1] = ""
                         newList = wordAsList
-                    sufCond = 0
 
+                    sufCond = 0
                     newWord = newWord.join(newList)
-                    print(newWord)
+
                 else:
                     zeroChk = 0
 
@@ -138,10 +130,8 @@ def wordPreparation(original):
                     else:
                         wordSegment = word[currentPair[0] - 1:currentPair[1] + 3]
 
-
                     for k in range(len(prefKeys)):
                         if prefKeys[k] in wordSegment:
-                            print("Search in prefix")
                             if prefKeys[k][0] == '(':
                                 wordAsList[currentPair[0]:currentPair[1] + 1] = prefix[prefKeys[k]]
                             else:
@@ -151,7 +141,6 @@ def wordPreparation(original):
 
                     for l in range(len(wordKeys)):
                         if wordKeys[l] in wordSegment:
-                            print("Search in words")
                             if l < 2:
                                 wordAsList[currentPair[0]:currentPair[1] + 3] = words[wordKeys[l]]
                             else:
@@ -165,20 +154,16 @@ def wordPreparation(original):
 
                     for m in range(len(extKeys)):
                         if extKeys[m] in wordSegment:
-                            print("Search in extras")
                             wordAsList[currentPair[0]:currentPair[1] + 1] = extras[extKeys[m]]
                             newList = wordAsList
                             zeroChk = 1
 
                     if not zeroChk:
-                        print("Not in dictionaries")
                         wordAsList[currentPair[0]:currentPair[1] + 1] = ""
                         newList = wordAsList
 
                     newWord = newWord.join(newList)
-                    print(newWord)
-                print("Analized Segment: ")
-                print(newWord)
+
                 word = newWord
                 print("Final Word:")
                 print(word)

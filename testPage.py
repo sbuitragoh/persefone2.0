@@ -9,8 +9,8 @@ from matplotlib import patches as pch
 import scipy as sc
 
 def main():
-    pagePath = './testImag/out_4.jpg'
-
+    pagePath = './testImag/out_21.jpg'
+    numberPage = pagePath[15:-4]
     # PAGE ADQUISITION
     pageOriginal, pageHSV, pageGrey = pagpre.pageImport(pagePath)
     processed = pagpre.pageProcessing(pageOriginal, pageHSV, pageGrey)
@@ -21,7 +21,7 @@ def main():
     # LINE FINDING
 
     lineInterval, lines = lisol.lineSet(pageCut)
-    lisol.lineCleaner(pageCut, lineInterval)
+    lisol.lineCleaner(pageCut, lineInterval, numberPage)
 
     # DEBUG STOP INSIDE MAIN
     print('Inside-main debug stop.')
